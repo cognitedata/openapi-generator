@@ -3,7 +3,7 @@
  * @export
  * @enum {string}
  */
-export enum {{classname}} {
+{{^enumsAsUnions}}export enum {{classname}} {
 {{#allowableValues}}
 {{#enumVars}}
     {{{name}}} = {{{value}}}{{^-last}},{{/-last}}

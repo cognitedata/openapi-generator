@@ -1764,6 +1764,7 @@ public class DefaultCodegen implements CodegenConfig {
                             addProperties(allProperties, allRequired, refSchema);
                         } else {
                             // composition
+                            LOGGER.info("refschema" + refSchema.get$ref());
                             addProperties(properties, required, refSchema);
                         }
                     }
@@ -1895,17 +1896,19 @@ public class DefaultCodegen implements CodegenConfig {
         if (schema instanceof ComposedSchema) {
             ComposedSchema composedSchema = (ComposedSchema) schema;
 
-            for (Schema component : composedSchema.getAllOf()) {
-                addProperties(properties, required, component);
+            if (composedSchema.getAllOf() != null) {
+                for (Schema component : composedSchema.getAllOf()) {
+                    addProperties(properties, required, component);
+                }
             }
 
-            if (composedSchema.getOneOf() != null) {
-                throw new RuntimeException("Please report the issue: Cannot process oneOf (Composed Scheme) in addProperties: " + schema);
-            }
+            // if (composedSchema.getOneOf() != null) {
+            //     throw new RuntimeException("Please report the issue: Cannot process oneOf (Composed Scheme) in addProperties: " + schema);
+            // }
 
-            if (composedSchema.getAnyOf() != null) {
-                throw new RuntimeException("Please report the issue: Cannot process anyOf (Composed Schema) in addProperties: " + schema);
-            }
+            // if (composedSchema.getAnyOf() != null) {
+            //     throw new RuntimeException("Please report the issue: Cannot process anyOf (Composed Schema) in addProperties: " + schema);
+            // }
 
             return;
         }
