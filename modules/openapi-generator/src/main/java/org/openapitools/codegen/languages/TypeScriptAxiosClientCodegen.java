@@ -187,6 +187,12 @@ public class TypeScriptAxiosClientCodegen extends AbstractTypeScriptClientCodege
                     }
                 }
             }
+            String[] excetions = {"createdTime", "lastUpdatedTime", "uploadedTime", "deletedTime", "timestamp"};
+            for (CodegenProperty var : cm.vars) {
+                if (Boolean.TRUE.equals(var.isNumeric) && Arrays.asList(excetions).contains(var.name)) {
+                    var.dataType = "Date";
+                }
+            }
         }
         
         // Apply the model file name to the imports as well
