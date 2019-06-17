@@ -19,6 +19,7 @@ package org.openapitools.codegen.languages;
 
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.ComposedSchema;
 import io.swagger.v3.parser.util.SchemaTypeUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.codegen.CliOption;
@@ -127,6 +128,34 @@ public class TypeScriptAxiosClientCodegen extends AbstractTypeScriptClientCodege
             addNpmPackageGeneration();
         }
 
+    }
+
+    @Override
+    public CodegenModel fromModel(String name, Schema model) {
+        CodegenModel cm = super.fromModel(name, model);
+
+        if(!isLanguagePrimitive(cm.getDataType()) && model.get$ref() != null) {
+            // alias to schema
+            cm.isAlias = true;
+        }
+        
+        if(ModelUtils.isComposedSchema(model)) {
+            List<Schema> oneOf = ((ComposedSchema) model).getOneOf();
+            if(cm.oneOf.isEmpty() && oneOf != null && !oneOf.isEmpty()) {
+                // one of primitives
+                
+                for (Schema oneOfSchema : oneOf) {
+                    if (StringUtils.isBlank(oneOfSchema.get$ref())) {
+                        cm.oneOf.add(getSchemaType(oneOfSchema));
+                    }
+                }
+            }
+        }
+        return cm;
+    }
+
+    private boolean isLanguagePrimitive(String type) {
+        return languageSpecificPrimitives.contains(type);
     }
 
     @Override
