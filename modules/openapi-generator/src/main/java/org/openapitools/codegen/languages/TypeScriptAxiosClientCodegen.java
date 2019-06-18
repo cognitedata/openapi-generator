@@ -39,6 +39,7 @@ public class TypeScriptAxiosClientCodegen extends AbstractTypeScriptClientCodege
     public static final String SEPARATE_MODELS_AND_API = "withSeparateModelsAndApi";
     public static final String WITHOUT_PREFIX_ENUMS = "withoutPrefixEnums";
     public static final String ENUMS_AS_UNIONS = "enumsAsUnions";
+    public static final String MODELS_IN_SEPARATE_FILE = "modelsInSeparateFile";
 
     protected String npmRepository = null;
 
@@ -59,6 +60,7 @@ public class TypeScriptAxiosClientCodegen extends AbstractTypeScriptClientCodege
         this.cliOptions.add(new CliOption(SEPARATE_MODELS_AND_API, "Put the model and api in separate folders and in separate classes", SchemaTypeUtil.BOOLEAN_TYPE).defaultValue(Boolean.FALSE.toString()));
         this.cliOptions.add(new CliOption(WITHOUT_PREFIX_ENUMS, "Don't prefix enum names with class names", SchemaTypeUtil.BOOLEAN_TYPE).defaultValue(Boolean.FALSE.toString()));
         this.cliOptions.add(new CliOption(ENUMS_AS_UNIONS, "Generate enums using union form", SchemaTypeUtil.BOOLEAN_TYPE).defaultValue(Boolean.FALSE.toString()));
+        this.cliOptions.add(new CliOption(MODELS_IN_SEPARATE_FILE, "Put all models in single separate file", SchemaTypeUtil.BOOLEAN_TYPE).defaultValue(Boolean.FALSE.toString()));
     }
 
     @Override
@@ -123,6 +125,11 @@ public class TypeScriptAxiosClientCodegen extends AbstractTypeScriptClientCodege
                 modelTemplateFiles.put("model.mustache", ".ts");
                 apiTemplateFiles.put("apiInner.mustache", ".ts");
                 supportingFiles.add(new SupportingFile("modelIndex.mustache", tsModelPackage, "index.ts"));
+            }
+        } else if (additionalProperties.containsKey(MODELS_IN_SEPARATE_FILE)) {
+            boolean separate = Boolean.parseBoolean(additionalProperties.get(MODELS_IN_SEPARATE_FILE).toString());
+            if (separate) {
+                supportingFiles.add(new SupportingFile("models.mustache", "", "types.ts"));
             }
         }
 
