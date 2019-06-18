@@ -3,10 +3,18 @@
  * @export
  * @enum {string}
  */
-{{^enumsAsUnions}}export enum {{classname}} {
+{{^enumsAsUnions}}export enum {{#enumName}}{{enumName}}{{/enumName}}{{^enumName}}{{classname}}{{/enumName}} {
 {{#allowableValues}}
 {{#enumVars}}
     {{{name}}} = {{{value}}}{{^-last}},{{/-last}}
 {{/enumVars}}
 {{/allowableValues}}
-}
+}{{/enumsAsUnions}}{{#enumsAsUnions}}export type {{#enumName}}{{enumName}}{{/enumName}}{{^enumName}}{{classname}}{{/enumName}} = {{#allowableValues}}{{#enumVars}}{{{value}}}{{^-last}} | {{/-last}}{{/enumVars}}{{/allowableValues}};
+
+export const {{#enumName}}{{enumName}}{{/enumName}}{{^enumName}}{{classname}}{{/enumName}} = {
+{{#allowableValues}}
+{{#enumVars}}
+    {{name}}: {{{value}}} as {{#enumName}}{{enumName}}{{/enumName}}{{^enumName}}{{classname}}{{/enumName}}{{^-last}},{{/-last}}
+{{/enumVars}}
+{{/allowableValues}}
+}{{/enumsAsUnions}}
