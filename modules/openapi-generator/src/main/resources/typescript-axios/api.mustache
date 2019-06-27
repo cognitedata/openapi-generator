@@ -8,9 +8,14 @@ import { Configuration } from './configuration';
 import globalAxios, { AxiosPromise, AxiosInstance } from 'axios';
 import { BASE_PATH, COLLECTION_FORMATS, RequestArgs, BaseAPI, RequiredError } from './base';
 
+{{^modelsInSeparateFile}}
+{{>models}}
+{{/modelsInSeparateFile}}{{#modelsInSeparateFile}}import {
 {{#models}}
-{{#model}}{{#isEnum}}{{>modelEnum}}{{/isEnum}}{{#oneOf}}{{#-first}}{{>modelOneOf}}{{/-first}}{{/oneOf}}{{^isEnum}}{{^oneOf}}{{>modelGeneric}}{{/oneOf}}{{/isEnum}}{{/model}}
+    {{#model}}{{classname}}{{/model}}{{^-last}},{{/-last}}
 {{/models}}
+} from './types';
+{{/modelsInSeparateFile}}
 {{#apiInfo}}{{#apis}}
 {{>apiInner}}
 {{/apis}}{{/apiInfo}}

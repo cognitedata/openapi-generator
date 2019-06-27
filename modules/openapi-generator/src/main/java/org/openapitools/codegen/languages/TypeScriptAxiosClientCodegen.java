@@ -19,6 +19,7 @@ package org.openapitools.codegen.languages;
 
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.ComposedSchema;
 import io.swagger.v3.parser.util.SchemaTypeUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.codegen.CliOption;
@@ -37,6 +38,8 @@ public class TypeScriptAxiosClientCodegen extends AbstractTypeScriptClientCodege
     public static final String WITH_INTERFACES = "withInterfaces";
     public static final String SEPARATE_MODELS_AND_API = "withSeparateModelsAndApi";
     public static final String WITHOUT_PREFIX_ENUMS = "withoutPrefixEnums";
+    public static final String ENUMS_AS_UNIONS = "enumsAsUnions";
+    public static final String MODELS_IN_SEPARATE_FILE = "modelsInSeparateFile";
 
     protected String npmRepository = null;
 
@@ -56,6 +59,8 @@ public class TypeScriptAxiosClientCodegen extends AbstractTypeScriptClientCodege
         this.cliOptions.add(new CliOption(WITH_INTERFACES, "Setting this property to true will generate interfaces next to the default class implementations.", SchemaTypeUtil.BOOLEAN_TYPE).defaultValue(Boolean.FALSE.toString()));
         this.cliOptions.add(new CliOption(SEPARATE_MODELS_AND_API, "Put the model and api in separate folders and in separate classes", SchemaTypeUtil.BOOLEAN_TYPE).defaultValue(Boolean.FALSE.toString()));
         this.cliOptions.add(new CliOption(WITHOUT_PREFIX_ENUMS, "Don't prefix enum names with class names", SchemaTypeUtil.BOOLEAN_TYPE).defaultValue(Boolean.FALSE.toString()));
+        this.cliOptions.add(new CliOption(ENUMS_AS_UNIONS, "Generate enums using union form", SchemaTypeUtil.BOOLEAN_TYPE).defaultValue(Boolean.FALSE.toString()));
+        this.cliOptions.add(new CliOption(MODELS_IN_SEPARATE_FILE, "Put all models in single separate file", SchemaTypeUtil.BOOLEAN_TYPE).defaultValue(Boolean.FALSE.toString()));
     }
 
     @Override
@@ -121,12 +126,45 @@ public class TypeScriptAxiosClientCodegen extends AbstractTypeScriptClientCodege
                 apiTemplateFiles.put("apiInner.mustache", ".ts");
                 supportingFiles.add(new SupportingFile("modelIndex.mustache", tsModelPackage, "index.ts"));
             }
+        } else if (additionalProperties.containsKey(MODELS_IN_SEPARATE_FILE)) {
+            boolean separate = Boolean.parseBoolean(additionalProperties.get(MODELS_IN_SEPARATE_FILE).toString());
+            if (separate) {
+                supportingFiles.add(new SupportingFile("models.mustache", "", "types.ts"));
+            }
         }
 
         if (additionalProperties.containsKey(NPM_NAME)) {
             addNpmPackageGeneration();
         }
 
+    }
+
+    @Override
+    public CodegenModel fromModel(String name, Schema model) {
+        CodegenModel cm = super.fromModel(name, model);
+
+        if(!isLanguagePrimitive(cm.getDataType()) && model.get$ref() != null) {
+            // alias to schema
+            cm.isAlias = true;
+        }
+        
+        if(ModelUtils.isComposedSchema(model)) {
+            List<Schema> oneOf = ((ComposedSchema) model).getOneOf();
+            if(cm.oneOf.isEmpty() && oneOf != null && !oneOf.isEmpty()) {
+                // one of primitives
+                
+                for (Schema oneOfSchema : oneOf) {
+                    if (StringUtils.isBlank(oneOfSchema.get$ref())) {
+                        cm.oneOf.add(getSchemaType(oneOfSchema));
+                    }
+                }
+            }
+        }
+        return cm;
+    }
+
+    private boolean isLanguagePrimitive(String type) {
+        return languageSpecificPrimitives.contains(type);
     }
 
     @Override
@@ -185,6 +223,12 @@ public class TypeScriptAxiosClientCodegen extends AbstractTypeScriptClientCodege
                             var.enumName = var.enumName.replace(var.enumName, cm.classname + var.enumName);
                         }
                     }
+                }
+            }
+            String[] excetions = {"createdTime", "lastUpdatedTime", "uploadedTime", "deletedTime", "timestamp"};
+            for (CodegenProperty var : cm.vars) {
+                if (Boolean.TRUE.equals(var.isNumeric) && Arrays.asList(excetions).contains(var.name)) {
+                    var.dataType = "Date";
                 }
             }
         }
